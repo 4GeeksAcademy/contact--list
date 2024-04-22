@@ -1,75 +1,101 @@
-import React, { useState } from "react";
-
-const initialTaskList = ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'];
+import React, { useEffect, useState } from "react";
+import TaskList from './taskList';
+import { string } from "prop-types";
 
 const Home = () =>{
-	const [input, setInput] = useState('');
-	const [taskList, setTaskList] = useState([...initialTaskList]);
-	const [isHovered, setIsHovered] = useState(null);
 
-	const addTask = () => {
-		if (input.trim()) {
-			setTaskList([...taskList, input]);
-			setInput('');
-		}
-	};
+	const [users, setUsers] = useState([]);
+	const [tasks, setTasks] = useState([]);
 
-	const deleteTask = (index) => {
-		const newTaskList = [...taskList];
-		newTaskList.splice(index, 1);
-		setTaskList(newTaskList);
-	}
-
-	const handleKeyPress = (e) =>{
-		if (e.keyCode === 13){
-			addTask();
+	function PrintUsers() {
+		console.log('total users, supposedly in order:');
+		for(let i=0;i<users.length;i++){
+			console.log(users[i].name);
 		}
 	}
 
-	 return (
-		<div className='full-component'>
-			<p className='title'>todos</p>
-			<div className='to-do-list'>
-				<div className='input-container'>
-					<input className='input' type='text' placeholder='Add task here' onKeyDown={handleKeyPress} onChange={(e) => setInput(e.target.value)}/>
-					<button className='add-button' onClick={addTask}>✔</button>
-				</div>
-				<div>
-					{(taskList.length == 0)? <div className='no-tasks'><p>No tasks. Add a task.</p></div> : <></>}
-					<ul className='list'>
-						{taskList.map((task, index) => (
-							<li className='list-item'
-								key={index}>
-								<div className='list-item-div' onMouseEnter={() => setIsHovered(index)} onMouseLeave={() => setIsHovered(null)}>
-									<span><p className='task'>{task}</p></span>
-									<button 
-										className={isHovered == index ? 'delete-button-active' : 'delete-button-hidden'}
-										onClick={() => deleteTask(index)}
-										>
-										✖
-									</button>
-								</div>
-							</li>
-						))}
-					</ul>
-					{(taskList.length == 0) ? 
-					<></> 
-					: 
-					(taskList.length == 1) ? 
-					<div className='tasks-left'> 
-						<p>{taskList.length} item left.</p>
-					</div> 
-					: 
-					<div className='tasks-left'>
-						<p>{taskList.length} items left.</p>
-					</div>}
-				</div>
-			</div>
-			<div className='extra-pages'>
-				<div className='second-page'></div>
-				<div className='third-page'></div>
-			</div>
+	function PrintTasks() {
+		console.log('printing tasks');
+		for(let i = 0; i < tasks.length; i++){
+			for (let j=0; j < tasks[i].length; j++) {
+				console.log(users[i].name + "'s task " + j + ': ' + tasks[i][j]);
+			}
+		}
+	}
+
+	function FetchUsers() {
+		fetch('https://playground.4geeks.com/todo/users/', {
+		method: "GET",
+		})
+		.then((response) => response.json())
+		.then((json) => {
+		console.log(json);
+		console.log(json.users);
+		setUsers(json.users);
+		})
+		.catch(error => {
+			console.error(error);
+		});
+	}
+
+	async function FetchTasks() {
+		console.log('FetchTasks() was called')
+		console.log('users.length: ' + users.length);
+		let userName = '';
+		let task = '';
+		let arrayOfArrays = [];
+		async function fetchTasksForUser(userIndex) {
+			const user = users[userIndex];
+			const response = await fetch('https://playground.4geeks.com/todo/users/' + user.name);
+			const json = await response.json();
 			
+			userName = user.name;
+			console.log("user: " + userName + '. ' + userName + "'s tasks amount: " + json.todos.length);
+			let array = [];
+			for(let j=0; j < json.todos.length; j++){
+				task = json.todos[j].label;
+				console.log(json.name + "'s task " + j + ': ' + task);
+				array.push(task);
+			}
+			arrayOfArrays.push(array);
+			
+			if (userIndex < users.length - 1) {
+				await fetchTasksForUser(userIndex + 1); // Fetch tasks for the next user
+			} else {
+				setTasks(arrayOfArrays); // If all tasks are fetched, update tasks
+			}
+		}
+		
+		if (users.length > 0) {
+			await fetchTasksForUser(0); // Start fetching tasks for the first user
+		}
+		
+	}
+
+	useEffect(() => {
+		FetchUsers();
+	}, [])
+
+	useEffect(() => {
+		if (users.length > 0){
+			PrintUsers();
+			FetchTasks();
+		}
+	}, [users]);
+
+	useEffect(() => {
+		if (tasks.length > 0) {
+			PrintTasks();
+		}
+	}, [tasks]);
+
+	return (
+		<div className='full-page'>
+			<p className='title'>todos</p>
+			{users.map((user, index) => (
+				<TaskList key={index} user={user} tasksFromFetch={tasks[index]}/>
+			))}
+			<button onClick={FetchUsers}>Fetch</button>
 		</div>
 	) 
 }
