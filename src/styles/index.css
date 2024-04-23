@@ -58,6 +58,34 @@ input{
     margin: 0;
 }
 
+.list-header{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border-bottom: 1px solid lightgray;
+}
+
+.create-user-box{
+    background-color: white;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    box-shadow: 0px 2px 5px 1px rgba(0,0,0,.2);
+}
+
+.add-button{
+    border-left: 1px solid lightgray;
+}
+
+.delete-user-button{
+    border-left: 1px solid lightgray;
+}
+
+.user-name{
+    width: auto;
+    margin: 10px;
+}
+
 .list-item-div{
     display: flex;
     flex-direction: row;
@@ -75,6 +103,10 @@ input{
 p.task{
     display: inline-block;
     word-break: break-word;
+}
+
+p.user-name-text{
+    font-size: 20px;
 }
 
 .delete-button-hidden{
@@ -131,3 +163,4 @@ p.task{
     z-index: 1;
     box-shadow: 0px 2px 5px 1px rgba(0,0,0,.2);
 }
+

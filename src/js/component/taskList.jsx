@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 const initialTaskList = [];
 
-const TaskList = ({user, tasksFromFetch}) =>{
+const TaskList = ({user, tasksFromFetch, updateUsers, updateTasks}) =>{
 
 	const [input, setInput] = useState('');
 	const [taskList, setTaskList] = useState([...initialTaskList]);
@@ -13,6 +13,20 @@ const TaskList = ({user, tasksFromFetch}) =>{
 			setTaskList([...tasksFromFetch]);
 		}
 	},[tasksFromFetch]);
+
+	function FetchDeleteTask(taskId) {
+		fetch('https://playground.4geeks.com/todo/todos/' + taskId, {
+			method: 'DELETE'
+		})
+		.then(response => {
+			if (!response.ok) {
+				throw new Error('Failed to delete task');
+			}
+		})
+		.catch(error => {
+			console.error(error);
+		});
+	}
 
 	function PostNewTask(){
 		fetch('https://playground.4geeks.com/todo/todos/' + user.name, {
@@ -27,7 +41,10 @@ const TaskList = ({user, tasksFromFetch}) =>{
 		  })
 		})
 		.then(response => {
-			if (!response.ok) {
+			if (response.ok) {
+				updateTasks();
+			}
+			else{
 				throw new Error('Failed to add new task');
 			}
 		})
@@ -36,18 +53,38 @@ const TaskList = ({user, tasksFromFetch}) =>{
 		});
 	}
 
+	function DeleteUser(){
+		fetch('https://playground.4geeks.com/todo/users/' + user.name, {
+			method: 'DELETE'
+		})
+		.then(response => {
+			if (response.ok) {
+				updateUsers();
+			}
+			else{
+				throw new Error('Failed to delete user');
+			}
+		})
+		.catch(error => {
+			console.error(error);
+		});
+
+	}
+
 	const addTask = () => {
 		if (input.trim()) {
-			setTaskList([...taskList, input]);
+			const newTask = [input, null];
+			setTaskList([...taskList, newTask]);
 			PostNewTask();
 			setInput('');
 		}
 	};
 
-	const deleteTask = (index) => {
+	const deleteTask = (index, taskId) => {
 		const newTaskList = [...taskList];
 		newTaskList.splice(index, 1);
 		setTaskList(newTaskList);
+		FetchDeleteTask(taskId);
 	}
 
 	const handleKeyPress = (e) =>{
@@ -60,7 +97,10 @@ const TaskList = ({user, tasksFromFetch}) =>{
 		<div className='full-component'>
 			<div className='to-do-list'>
 				<div className='list-header'>
-					<p>{user.name}</p>
+					<div className='user-name'>
+						<p className='user-name-text'>{user.name}'s todos</p>
+					</div>
+					<button className='delete-user-button' onClick={DeleteUser}>Delete User</button>
 				</div>
 				<div className='input-container'>
 					<input className='input' type='text' placeholder='Add task here' onKeyDown={handleKeyPress} onChange={(e) => setInput(e.target.value)}/>
@@ -73,10 +113,10 @@ const TaskList = ({user, tasksFromFetch}) =>{
 							<li className='list-item'
 								key={index}>
 								<div className='list-item-div' onMouseEnter={() => setIsHovered(index)} onMouseLeave={() => setIsHovered(null)}>
-									<span><p className='task'>{task}</p></span>
+									<span><p className='task'>{task[0]}</p></span>
 									<button 
 										className={isHovered == index ? 'delete-button-active' : 'delete-button-hidden'}
-										onClick={() => deleteTask(index)}
+										onClick={() => deleteTask(index, task[1])}
 										>
 										✖
 									</button>
@@ -101,7 +141,7 @@ const TaskList = ({user, tasksFromFetch}) =>{
 				<div className='second-page'></div>
 				<div className='third-page'></div>
 			</div>
-			<br></br>
+			<br/>
 		</div>
 	) 
 }
